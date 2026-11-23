@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#102b46"><title>PKR Toman Hisab</title>
+<style>
+:root{--navy:#102b46;--blue:#1769aa;--bg:#f3f6fa;--card:#fff;--text:#172433;--muted:#6b7888;--green:#13804b;--red:#c33d3d;--line:#e3e9f0}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--text);padding-bottom:82px}
+header{background:var(--navy);color:#fff;padding:20px 16px 18px;border-radius:0 0 20px 20px}
+header h1{font-size:21px;margin:0 0 5px}header p{font-size:12px;opacity:.8;margin:0}
+main{padding:14px;max-width:760px;margin:auto}.tabs{display:flex;gap:7px;margin:14px 0;overflow:auto}
+button,.tab{border:0;border-radius:11px;padding:12px 14px;font-weight:700;background:#e5edf5;color:var(--navy);cursor:pointer}
+.tab.active,.primary{background:var(--blue);color:white}.danger{background:#ffeded;color:var(--red)}.success{background:#e6f6ed;color:var(--green)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:15px;margin:12px 0;box-shadow:0 2px 8px #14283c08}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{padding:13px;background:#f7f9fc;border-radius:12px;min-width:0}.metric small{display:block;color:var(--muted);font-size:11px;margin-bottom:7px}.metric b{font-size:18px;overflow-wrap:anywhere}.green{color:var(--green)}.red{color:var(--red)}
+label{font-size:12px;color:var(--muted);display:block;margin:11px 0 5px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #d5dee8;border-radius:10px;font-size:16px;background:white;color:var(--text)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.hint{font-size:11px;color:var(--muted);line-height:1.5}
+.hidden{display:none!important}.entry{border-bottom:1px solid var(--line);padding:12px 0}.entry:last-child{border:0}.entrytop{display:flex;justify-content:space-between;gap:8px}.pill{font-size:10px;padding:4px 7px;border-radius:20px;background:#eaf1f8;color:var(--navy);font-weight:bold}
+.actions{display:flex;gap:7px;margin-top:8px}.actions button{padding:7px 10px;font-size:12px}.bottom{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--line);padding:9px 12px;display:flex;justify-content:space-around;z-index:5}
+.bottom button{background:transparent;padding:8px 10px;font-size:11px;color:var(--muted)}.bottom button.active{color:var(--blue)}
+table{width:100%;border-collapse:collapse;font-size:12px}td,th{text-align:left;padding:9px 5px;border-bottom:1px solid var(--line)}th{color:var(--muted)}
+h2{font-size:17px;margin:4px 0 10px}.right{text-align:right}.notice{background:#fff7df;border:1px solid #f2dfaa;border-radius:10px;padding:10px;font-size:12px;line-height:1.5}
+</style></head>
+<body>
+<header><h1>PKR Toman Hisab</h1><p>Pakistani Rupees ⇄ Iranian Toman · Offline ledger</p></header>
+<main>
+<section id="dashboard">
+<h2>Business Overview</h2>
+<div class="grid">
+<div class="metric"><small>Current Toman Stock</small><b id="stock">0</b></div>
+<div class="metric"><small>Stock Cost (PKR)</small><b id="stockcost">Rs 0</b></div>
+<div class="metric"><small>Average Buy Rate</small><b id="avgbuy">0</b><small>Toman per PKR</small></div>
+<div class="metric"><small>Average Sell Rate</small><b id="avgsell">0</b><small>Toman per PKR</small></div>
+<div class="metric"><small>Realized Profit / Loss</small><b id="pl">Rs 0</b></div>
+<div class="metric"><small>Today's Profit / Loss</small><b id="todaypl">Rs 0</b></div>
+</div>
+<div class="card"><h2>Quick Actions</h2><div class="row"><button class="primary" onclick="show('buy')">＋ Buy Toman</button><button class="primary" onclick="show('sell')">− Sell Toman</button></div></div>
+<div class="notice">Rate convention: enter how many Toman you receive/pay for 1 PKR. Example: rate 930 means 1 PKR = 930 Toman. Profit is calculated in PKR using moving weighted-average cost.</div>
+<div class="card"><h2>Recent Transactions</h2><div id="recent"></div></div>
+</section>
+<section id="buy" class="hidden"><h2>Buy Toman</h2><div class="card">
+<label>Date</label><input id="buydate" type="date">
+<label>PKR paid</label><input id="buypkr" type="number" min="0" step="any" placeholder="e.g. 3000000">
+<label>Buying rate (Toman per 1 PKR)</label><input id="buyrate" type="number" min="0" step="any" placeholder="e.g. 930">
+<label>Person / source (optional)</label><input id="buyperson" placeholder="Name or reference">
+<label>Notes (optional)</label><textarea id="buynote" rows="2"></textarea>
+<p class="hint" id="buycalc">Toman received: 0</p><button class="primary" style="width:100%" onclick="addBuy()">Save Purchase</button></div></section>
+<section id="sell" class="hidden"><h2>Sell Toman</h2><div class="card">
+<label>Date</label><input id="selldate" type="date">
+<label>Toman given to customer</label><input id="selltoman" type="number" min="0" step="any" placeholder="e.g. 2790000000">
+<label>Selling rate (Toman per 1 PKR)</label><input id="sellrate" type="number" min="0" step="any" placeholder="e.g. 920">
+<label>Customer (optional)</label><input id="sellperson" placeholder="Customer name">
+<label>Notes (optional)</label><textarea id="sellnote" rows="2"></textarea>
+<p class="hint" id="sellcalc">PKR received: 0</p><button class="primary" style="width:100%" onclick="addSell()">Save Sale</button></div></section>
+<section id="history" class="hidden"><h2>Transaction History</h2><div class="card"><div id="historylist"></div></div></section>
+<section id="backup" class="hidden"><h2>Backup & Settings</h2><div class="card">
+<p>All entries are stored on this device. Export a backup regularly, and keep it somewhere safe.</p>
+<button class="primary" style="width:100%;margin:5px 0" onclick="exportBackup()">Download Backup (JSON)</button>
+<label>Restore backup file</label><input id="restorefile" type="file" accept=".json,application/json">
+<button class="success" style="width:100%;margin:5px 0" onclick="restoreBackup()">Restore Backup</button>
+<button style="width:100%;margin:5px 0" onclick="exportCSV()">Export Transactions (CSV)</button>
+<div class="notice">Important: uninstalling or clearing app data may erase local records. Export backups frequently. Do not share backup files containing customer details.</div>
+</div></section>
+</main>
+<nav class="bottom">
+<button id="nav-dashboard" class="active" onclick="show('dashboard')">⌂<br>Home</button>
+<button id="nav-buy" onclick="show('buy')">＋<br>Buy</button>
+<button id="nav-sell" onclick="show('sell')">−<br>Sell</button>
+<button id="nav-history" onclick="show('history')">▤<br>History</button>
+<button id="nav-backup" onclick="show('backup')">⚙<br>Backup</button>
+</nav>
+<script>
+const KEY='pkrtoman_transactions_v1'; let tx=JSON.parse(localStorage.getItem(KEY)||'[]');
+const $=id=>document.getElementById(id);
+const num=n=>Number(n||0);
+const fmt=(n,d=2)=>Number(n||0).toLocaleString('en-US',{maximumFractionDigits:d});
+const money=n=>'Rs '+fmt(n);
+function save(){localStorage.setItem(KEY,JSON.stringify(tx));render()}
+function today(){return new Date().toISOString().slice(0,10)}
+$('buydate').value=today();$('selldate').value=today();
+function calc(){
+ let stock=0,cost=0,pl=0,totalPkr=0,totalTomanBuy=0,totalTomanSell=0,totalPkrIn=0,todayPL=0;
+ const rows=[];
+ tx.forEach(t=>{
+  const avg=stock>0?cost/stock:0; let profit=0;
+  if(t.type==='BUY'){stock+=t.toman;cost+=t.pkr;totalPkr+=t.pkr;totalTomanBuy+=t.toman}
+  else {const c=t.toman*avg;profit=t.pkr-c;stock-=t.toman;cost-=c;pl+=profit;totalTomanSell+=t.toman;totalPkrIn+=t.pkr;if(t.date===today())todayPL+=profit}
+  rows.push({t,profit,stock,cost,avgBefore:avg});
+ });
+ return {stock,cost,pl,todayPL,totalPkr,totalTomanBuy,totalTomanSell,totalPkrIn,rows};
+}
+function render(){
+ const x=calc(),avgBuy=x.totalPkr?x.totalTomanBuy/x.totalPkr:0,avgSell=x.totalPkrIn?x.totalTomanSell/x.totalPkrIn:0;
+ $('stock').textContent=fmt(x.stock,0);$('stockcost').textContent=money(x.cost);$('avgbuy').textContent=fmt(avgBuy,4);$('avgsell').textContent=fmt(avgSell,4);
+ $('pl').textContent=money(x.pl);$('pl').className=x.pl>=0?'green':'red';$('todaypl').textContent=money(x.todayPL);$('todaypl').className=x.todayPL>=0?'green':'red';
+ const recent=x.rows.slice(-5).reverse();$('recent').innerHTML=recent.length?recent.map(({t,profit})=>entryHTML(t,profit,false)).join(''):'<p class="hint">No transactions yet.</p>';
+ $('historylist').innerHTML=x.rows.length?x.rows.slice().reverse().map(({t,profit})=>entryHTML(t,profit,true)).join(''):'<p class="hint">No transactions yet.</p>';
+}
+function entryHTML(t,p,actions){return `<div class="entry"><div class="entrytop"><b>${t.type==='BUY'?'BUY TOMAN':'SELL TOMAN'} · ${money(t.pkr)}</b><span class="pill">${t.date}</span></div><div class="hint">Rate: ${fmt(t.rate,4)} · Toman: ${fmt(t.toman,0)}${t.person?' · '+esc(t.person):''}</div>${t.type==='SELL'?`<div class="${p>=0?'green':'red'}" style="font-weight:bold;margin-top:4px">${p>=0?'Profit':'Loss'}: ${money(p)}</div>`:''}${t.note?`<div class="hint">${esc(t.note)}</div>`:''}${actions?`<div class="actions"><button onclick="editTx('${t.id}')">Edit</button><button class="danger" onclick="deleteTx('${t.id}')">Delete</button></div>`:''}</div>`}
+function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function addBuy(){
+ const p=num($('buypkr').value),r=num($('buyrate').value);if(p<=0||r<=0)return alert('PKR amount aur rate sahi enter karein.');
+ tx.push({id:crypto.randomUUID(),date:$('buydate').value,type:'BUY',pkr:p,rate:r,toman:p*r,person:$('buyperson').value,note:$('buynote').value});
+ clearForm('buy');save();show('dashboard');
+}
+function addSell(){
+ const t=num($('selltoman').value),r=num($('sellrate').value);if(t<=0||r<=0)return alert('Toman amount aur rate sahi enter karein.');
+ const x=calc();if(t>x.stock+0.0001)return alert('Aapke paas itna Toman stock available nahi. Available: '+fmt(x.stock,0));
+ tx.push({id:crypto.randomUUID(),date:$('selldate').value,type:'SELL',rate:r,toman:t,pkr:t/r,person:$('sellperson').value,note:$('sellnote').value});
+ clearForm('sell');save();show('dashboard');
+}
+function clearForm(which){if(which==='buy'){['buypkr','buyrate','buyperson','buynote'].forEach(id=>$(id).value='');$('buydate').value=today()}else{['selltoman','sellrate','sellperson','sellnote'].forEach(id=>$(id).value='');$('selldate').value=today()}}
+function show(s){['dashboard','buy','sell','history','backup'].forEach(id=>$(id).classList.toggle('hidden',id!==s));document.querySelectorAll('.bottom button').forEach(b=>b.classList.remove('active'));$('nav-'+s).classList.add('active');render()}
+function deleteTx(id){if(confirm('Delete this transaction?')){tx=tx.filter(t=>t.id!==id);save()}}
+function editTx(id){
+ const t=tx.find(x=>x.id===id);if(!t)return;
+ const date=prompt('Date (YYYY-MM-DD)',t.date);if(date===null)return;
+ const rate=Number(prompt('Rate (Toman per PKR)',t.rate));if(!rate||rate<=0)return alert('Invalid rate');
+ if(t.type==='BUY'){const p=Number(prompt('PKR paid',t.pkr));if(!p||p<=0)return; t.pkr=p;t.toman=p*rate}
+ else{const q=Number(prompt('Toman sold',t.toman));if(!q||q<=0)return;t.toman=q;t.pkr=q/rate}
+ t.date=date;t.rate=rate;save();
+}
+function exportBackup(){const blob=new Blob([JSON.stringify({app:'PKR Toman Hisab',version:1,exported:new Date().toISOString(),transactions:tx},null,2)],{type:'application/json'});download(blob,'PKR-Toman-Backup-'+today()+'.json')}
+function restoreBackup(){const f=$('restorefile').files[0];if(!f)return alert('Pehle backup JSON file select karein.');const rd=new FileReader();rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!Array.isArray(d.transactions))throw 0;if(!confirm('Current entries replace ho jayengi. Continue?'))return;tx=d.transactions;save();alert('Backup restored.')}catch(e){alert('Backup file valid nahi hai.')}};rd.readAsText(f)}
+function exportCSV(){let lines=[['Date','Type','Rate Toman/PKR','PKR','Toman','Person','Notes']];tx.forEach(t=>lines.push([t.date,t.type,t.rate,t.pkr,t.toman,t.person,t.note]));const csv=lines.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n');download(new Blob([csv],{type:'text/csv'}),'PKR-Toman-Transactions.csv')}
+function download(blob,name){if(window.AndroidBridge){const reader=new FileReader();reader.onload=()=>AndroidBridge.saveFile(reader.result.split(',')[1],name,blob.type||'application/octet-stream');reader.readAsDataURL(blob);return;}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href)}
+['buypkr','buyrate'].forEach(id=>$(id).addEventListener('input',()=>{$('buycalc').textContent='Toman received: '+fmt(num($('buypkr').value)*num($('buyrate').value),0)}));
+['selltoman','sellrate'].forEach(id=>$(id).addEventListener('input',()=>{$('sellcalc').textContent='PKR received: '+money(num($('selltoman').value)/num($('sellrate').value))}));
+render();
+</script></body></html>
